@@ -5,24 +5,6 @@ model_dict = {
     #'resnet101':    resnet101(pretrained=True, progress=True) 要下载太慢了
 }
 
-
-from torchvision import transforms
-transforms_dict = {
-    True:   transforms.Compose([
-        transforms.RandomResizedCrop((224, 224)),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomVerticalFlip(),
-        transforms.RandomRotation(90),
-        transforms.RandomRotation(90),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, -.406],[0.229, 0.224, 0.225])]),
-    False:  transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, -.406],[0.229, 0.224, 0.225])])
-}
-
-
 from torch import optim
 optim_dict = {
     'SGD':      optim.SGD,

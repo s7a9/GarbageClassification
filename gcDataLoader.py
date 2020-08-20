@@ -1,37 +1,39 @@
 from torch.utils.data import DataLoader, random_split, Dataset
-from PIL import Image
 import numpy as np
+import torch
 
 import os
 import logging
 import math
+import numpy as np
+from Preprocess import get_file_size, EXPORT_DIR, data_aug_size
 
-LABEL_PATH = 'data/garbage_classify/labels.txt'
-DATA_DIR = 'data/garbage_classify/train_data/'
+LABEL_PATH = 'data/'
 
-def load_image(path):
-    return Image.open(path).convert('RGB')
-    
+DATA_SIZE = 14800
+
 class MyDataset(Dataset):
-    def __init__(self, transform):
-        self.transform = transform
-        self.data_info = []
-        with open(LABEL_PATH, 'r') as fh:
-            for line in fh.readlines():
-                line = line.split(' ')
-                self.data_info.append((line[0], int(line[1])))
+    def __init__(self, aug= False):
+        self.is_augmented = aug
+        self.file_batch_size = get_file_size(aug)
+        self.data_x_path = os.path.join(EXPORT_DIR, 'xaug_' if aug else 'x_')
+        self.data_y = np.load(os.path.join(EXPORT_DIR, 'yaug.npy' if aug else 'y.npy'))
+        self.data_size = DATA_SIZE * data_aug_size if aug else DATA_SIZE
     
     def __len__(self):
-        return len(self.data_info)
+        return self.data_size
     
     def __getitem__(self, index):
-        fn, lbl = self.data_info[index]
-        data = self.transform(load_image(os.path.join(DATA_DIR, fn)))
-        return data, lbl
+        file_index = index // self.file_batch_size
+        batch_index = index % self.file_batch_size
+        X = np.load(self.data_x_path + str(file_index) + '.npy')[batch_index]
+        y = self.data_y[index]
+        y = torch.tensor(y, dtype= torch.long)
+        return X, y
 
 
-def get_loaders(train_test_ratio, batch_size, transform):
-    full_set = MyDataset(transform)
+def get_loaders(train_test_ratio, batch_size, is_augmented):
+    full_set = MyDataset(is_augmented)
     trainning_size = math.ceil(len(full_set) * train_test_ratio)
     train_set, test_set = random_split(dataset= full_set, 
         lengths= [trainning_size, len(full_set) - trainning_size])
@@ -40,17 +42,8 @@ def get_loaders(train_test_ratio, batch_size, transform):
     test_loader  = DataLoader(test_set,  batch_size= batch_size, shuffle= True)
     return train_loader, test_loader
 
-# from torchvision import transforms
-
-# if __name__ == '__main__':
-#     xxx, yyy= get_loaders(0, 16,
-#         transforms.Compose([
-#             transforms.RandomResizedCrop(224),
-#             transforms.RandomHorizontalFlip(),
-#             transforms.RandomVerticalFlip(),
-#             transforms.RandomRotation(90),
-#             transforms.RandomRotation(90),
-#             transforms.ToTensor(),
-#             transforms.Normalize([0.485, 0.456, -.406],[0.229, 0.224, 0.225])]))
-#     d, l = xxx[0]
-#     print(d)
+if __name__ == '__main__':
+    full_set = MyDataset(True)
+    X, y = full_set[15]
+    print(X.shape, y.shape)
+    # print(X, y)
