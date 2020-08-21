@@ -24,6 +24,8 @@ parser.add_argument('--optim', type= str, default= 'SGD',
     help= 'Choose optimizer (SGD(default) Adam Adadelta)')
 parser.add_argument('--scheduler', type= str, default= 'None',
     help= 'Chose scheduler (StepLR ExpLr CosLR Plateau)')
+parser.add_argument('--epoch', type= int, default= 20,
+    help= 'Number of Epoches (defualt 20)')
 
 args = parser.parse_args()
 
@@ -49,7 +51,7 @@ else:
 criteon = nn.CrossEntropyLoss()
 
 logging.info('begin to train...')
-for epoch in range(1):
+for epoch in range(args.epoch):
     for x, label in train_loader:
         x, label = x.to(device), label.to(device)
         logits = model(x)
