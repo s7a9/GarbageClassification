@@ -1,9 +1,23 @@
-from torchvision.models import resnet18, resnet50, resnet101
-model_dict = {
-    'resnet18':     resnet18(pretrained=True, progress=True),
-    'resnet50':     resnet50(pretrained=True, progress=True),
-    #'resnet101':    resnet101(pretrained=True, progress=True) 要下载太慢了
-}
+from  torchvision.models import resnet18, resnet50, resnet101
+import CBAMModels
+
+def get_model(model_name, use_cbam):
+    if not use_cbam:
+        if model_name == 'resnet18':
+            return resnet18(pretrained=True, progress=True)
+        elif model_name == 'resnet50':
+            return resnet50(pretrained=True, progress=True)
+        elif model_name == 'resnet101':
+            return resnet101(pretrained=True, progress=True)
+    else:
+        if model_name == 'resnet18':
+            return CBAMModels.resnet18(pretrained=True, progress=True)
+        elif model_name == 'resnet50':
+            return CBAMModels.resnet50(pretrained=True, progress=True)
+        elif model_name == 'resnet101':
+            return CBAMModels.resnet101(pretrained=True, progress=True)
+    print("Unexpected model name!!")
+    return None
 
 from torch import optim
 optim_dict = {

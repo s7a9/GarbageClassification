@@ -5,7 +5,7 @@ import os
 import logging
 import argparse
 from gcDataLoader import get_loaders
-from ParseConstants import *
+from ParseConstants import get_model, get_optimizer
 # 设置log
 logging.basicConfig(level=logging.INFO, 
     format='%(asctime)s %(filename)s:%(lineno)d [%(levelname)s] %(message)s')
@@ -16,8 +16,7 @@ parser.add_argument('--model', type= str, default= 'resnet18',
 parser.add_argument('--bs', type= int, default= 16,
     help= 'Batch size (default 16)')
 parser.add_argument('-aug', action= 'store_const', 
-    const= True, default= False,
-    help= 'Use image augmentation')
+    const= True, default= False, help= 'Use image augmentation')
 parser.add_argument('--lr', type= float, default= 1e-4,
     help= 'Learning rate (default 1e-4)')
 parser.add_argument('--optim', type= str, default= 'SGD',
@@ -26,6 +25,8 @@ parser.add_argument('--scheduler', type= str, default= 'None',
     help= 'Chose scheduler (StepLR ExpLr CosLR Plateau)')
 parser.add_argument('--epoch', type= int, default= 20,
     help= 'Number of Epoches (defualt 20)')
+parser.add_argument('-cbam', action= 'store_const',
+    const= True, default= False, help= 'Use CBAM.')
 
 args = parser.parse_args()
 
@@ -40,7 +41,7 @@ logging.info(f'size of testing set: {test_len}')
 
 device = torch.device('cuda')
 # model = ResNet18().to(device)
-model = model_dict[args.model]
+model = get_model(args.model, args.cbam)
 num_in = model.fc.in_features
 model.fc = nn.Linear(num_in, 40)
 model = model.to(device)

@@ -26,7 +26,7 @@ class MyDataset(Dataset):
     def __getitem__(self, index):
         file_index = index // self.file_batch_size
         batch_index = index % self.file_batch_size
-        X = np.load(self.data_x_path + str(file_index) + '.npy')[batch_index]
+        X = torch.from_numpy(np.load(self.data_x_path + str(file_index) + '.npy')[batch_index])
         y = self.data_y[index]
         y = torch.tensor(y, dtype= torch.long)
         return X, y
