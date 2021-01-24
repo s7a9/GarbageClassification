@@ -4,36 +4,41 @@ import numpy as np
 from PIL import Image
 from torchvision import transforms
 
+
 def load_image(path):
     return Image.open(path).convert('RGB')
+
 
 DATA_DIR = 'data/garbage_classify/train_data/'
 EXPORT_DIR = 'data/'
 
 transforms_dict = {
     True:   transforms.Compose([
-        transforms.RandomResizedCrop((200, 200)) ,
+        transforms.RandomResizedCrop((200, 200)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
         # transforms.RandomRotation(90),
         transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, -.406],[0.229, 0.224, 0.225])]),
+        transforms.Normalize([0.485, 0.456, -.406], [0.229, 0.224, 0.225])]),
     False:  transforms.Compose([
         transforms.Resize((200, 200)),
         transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, -.406],[0.229, 0.224, 0.225])])
+        transforms.Normalize([0.485, 0.456, -.406], [0.229, 0.224, 0.225])])
 }
 
 
 data_batch_size = 5
 data_aug_size = 5
 
-def get_file_size(aug= False):
+
+def get_file_size(aug=False):
     return data_batch_size
+
 
 def write_to_file(ary, fn):
     ary = np.array(ary)
     np.save(fn, ary)
+
 
 def main():
     data_num1 = 0
@@ -53,10 +58,12 @@ def main():
                 ctnts = ctnts.split(',')
                 img_full = os.path.join(DATA_DIR, ctnts[0])
                 img = load_image(img_full)
-                data_x_raw.append(transforms_dict[False](img).numpy().reshape(3, 200, 200))
+                data_x_raw.append(transforms_dict[False](
+                    img).numpy().reshape(3, 200, 200))
                 data_y_raw.append(int(ctnts[1].strip()))
                 for i in range(data_aug_size):
-                    data_x_aug.append(transforms_dict[True](img).numpy().reshape(3, 200, 200))
+                    data_x_aug.append(transforms_dict[True](
+                        img).numpy().reshape(3, 200, 200))
                     data_y_aug.append(int(ctnts[1].strip()))
             total += 1
             if len(data_x_raw) >= data_batch_size:
@@ -71,6 +78,7 @@ def main():
     np.save(EXPORT_DIR + 'y.npy', data_y_raw)
 
     print(total, total * 5)
+
 
 if __name__ == '__main__':
     main()

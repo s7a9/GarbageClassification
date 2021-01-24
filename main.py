@@ -4,29 +4,35 @@ from torchvision import transforms
 import os
 import logging
 import argparse
-from gcDataLoader import get_loaders
+from GCDataLoader import get_loaders
 from ParseConstants import get_model, get_optimizer
+import pandas as pd
+
+
 # 设置log
-logging.basicConfig(level=logging.INFO, 
-    format='%(asctime)s %(filename)s:%(lineno)d [%(levelname)s] %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(filename)s:%(lineno)d [%(levelname)s] %(message)s')
 # 设置参数解析
-parser = argparse.ArgumentParser(description= 'Train a garbage classification model.')
-parser.add_argument('--model', type= str, default= 'resnet18', 
-    help= 'Choose model (from resnet18(default) resnet50 resnet101)')
-parser.add_argument('--bs', type= int, default= 16,
-    help= 'Batch size (default 16)')
-parser.add_argument('-aug', action= 'store_const', 
-    const= True, default= False, help= 'Use image augmentation')
-parser.add_argument('--lr', type= float, default= 1e-4,
-    help= 'Learning rate (default 1e-4)')
-parser.add_argument('--optim', type= str, default= 'SGD',
-    help= 'Choose optimizer (SGD(default) Adam Adadelta)')
-parser.add_argument('--scheduler', type= str, default= 'None',
-    help= 'Chose scheduler (StepLR ExpLr CosLR Plateau)')
-parser.add_argument('--epoch', type= int, default= 20,
-    help= 'Number of Epoches (defualt 20)')
-parser.add_argument('-cbam', action= 'store_const',
-    const= True, default= False, help= 'Use CBAM.')
+parser = argparse.ArgumentParser(
+    description='Train a garbage classification model.')
+parser.add_argument('--model', type=str, default='resnet18',
+                    help='Choose model (from resnet18(default) resnet50 resnet101)')
+parser.add_argument('--bs', type=int, default=16,
+                    help='Batch size (default 16)')
+parser.add_argument('-aug', action='store_const',
+                    const=True, default=False, help='Use image augmentation')
+parser.add_argument('--lr', type=float, default=1e-4,
+                    help='Learning rate (default 1e-4)')
+parser.add_argument('--optim', type=str, default='SGD',
+                    help='Choose optimizer (SGD(default) Adam Adadelta)')
+parser.add_argument('--scheduler', type=str, default='None',
+                    help='Chose scheduler (StepLR ExpLr CosLR Plateau)')
+parser.add_argument('--epoch', type=int, default=20,
+                    help='Number of Epoches (defualt 20)')
+parser.add_argument('-cbam', action='store_const',
+                    const=True, default=False, help='Use CBAM.')
+parser.add_argument('--o', type=str, default='',
+                    help='Output file')
 
 args = parser.parse_args()
 
@@ -45,15 +51,21 @@ model = get_model(args.model, args.cbam)
 num_in = model.fc.in_features
 model.fc = nn.Linear(num_in, 40)
 model = model.to(device)
-print(model, flush= True)
+# print(model, flush= True)
 
 use_scheduler = args.scheduler != 'None'
+save_results = args.o != ''
 if use_scheduler:
-    optimizer, scheduler = get_optimizer(model, args.lr, args.scheduler, args.optim)
+    optimizer, scheduler = get_optimizer(
+        model, args.lr, args.scheduler, args.optim)
 else:
     optimizer = get_optimizer(model, args.lr, args.scheduler, args.optim)
-# optimizer = optim.SGD(model.parameters(), lr=1e-4)  #TODO
 criteon = nn.CrossEntropyLoss()
+
+if save_results:
+    logging.info('save results to file: ' + args.o)
+    df = pd.DataFrame(columns=('epoch', 'train_loss',
+                               'test_loss', 'test_accuracy'))
 
 logging.info('begin to train...')
 for epoch in range(args.epoch):
@@ -87,4 +99,12 @@ for epoch in range(args.epoch):
             total_num += x.size(0)
         acc = total_corret / total_num
 
-    logging.info(f'[{epoch}] train_loss: {train_loss / train_len}, test_loss: {test_loss / test_len}, test_accuracy: {acc}')
+    logging.info(
+        f'[{epoch}] train_loss: {train_loss / train_len}, test_loss: {test_loss / test_len}, test_accuracy: {acc}')
+    if save_results:
+        df = df.append([{'epoch': epoch, 'train_loss': train_loss / train_len,
+                         'test_loss': test_loss / test_len, 'test_accuracy': acc}], ignore_index=True)
+
+if save_results:
+    df.set_index(['epoch'], inplace=True)
+    df.to_csv(args.o)

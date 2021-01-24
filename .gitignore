@@ -1,7 +1,7 @@
 /data/
 /__pycache__/
+/results/
 *.zip
-*.bat
 *.pptx
 *.aux
 *.bbl
@@ -10,3 +10,4 @@
 *.fls
 *.log
 *.synctex.gz
+*.info
